@@ -1,9 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { Form } from './Form';
+import { fn } from '@storybook/test';
 
 const meta = {
   component: Form,
+  title: 'Form',
+  tags: ['autodocs'],
+  args: {
+    onSubmit: fn(),
+  },
 } satisfies Meta<typeof Form>;
 
 export default meta;
@@ -15,7 +21,6 @@ export const Default: Story = {
     title: "title",
     description: "description",
     submitLabel: "submitLabel",
-    onSubmit: () => { }
   }
 };
 
@@ -24,6 +29,5 @@ export const Sample: Story = {
     title: "title2",
     description: "description2",
     submitLabel: "submitLabel2",
-    onSubmit: () => { }
   }
 };
