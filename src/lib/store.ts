@@ -1,7 +1,12 @@
 /* A simple redux store/actions/reducer implementation.
  * A true app would be more complex and separated into different files.
  */
-import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import {
+  configureStore,
+  createAsyncThunk,
+  createSlice,
+  PayloadAction,
+} from "@reduxjs/toolkit";
 import { useDispatch, useSelector, useStore } from "react-redux";
 
 type Task = {
@@ -14,7 +19,7 @@ type Task = {
 export type TaskBoxState = {
   tasks: Task[];
   status: string;
-  error: null;
+  error: string | null;
 };
 
 /*
@@ -32,6 +37,30 @@ const TaskBoxData: TaskBoxState = {
   status: "idle",
   error: null,
 };
+
+type FetchedTask = {
+  id: string;
+  title: string;
+  completed: boolean;
+};
+
+/*
+ * Creates an asyncThunk to fetch tasks from a remote endpoint.
+ * You can read more about Redux Toolkit's thunks in the docs:
+ * https://redux-toolkit.js.org/api/createAsyncThunk
+ */
+export const fetchTasks = createAsyncThunk("todos/fetchTodos", async () => {
+  const response = await fetch(
+    "https://jsonplaceholder.typicode.com/todos?userId=1"
+  );
+  const data = await response.json();
+  const result = data.map((task: FetchedTask) => ({
+    id: `${task.id}`,
+    title: task.title,
+    state: task.completed ? "TASK_ARCHIVED" : "TASK_INBOX",
+  }));
+  return result;
+});
 
 /*
  * The store is created here.
@@ -52,6 +81,28 @@ const TasksSlice = createSlice({
         state.tasks[task].state = newTaskState;
       }
     },
+  },
+  /*
+   * Extends the reducer for the async actions
+   * You can read more about it at https://redux-toolkit.js.org/api/createAsyncThunk
+   */
+  extraReducers: (builder) => {
+    builder.addCase(fetchTasks.pending, (state) => {
+      state.status = "loading";
+      state.error = null;
+      state.tasks = [];
+    });
+    builder.addCase(fetchTasks.fulfilled, (state, action) => {
+      state.status = "succeeded";
+      state.error = null;
+      // Add any fetched tasks to the array
+      state.tasks = action.payload;
+    });
+    builder.addCase(fetchTasks.rejected, (state) => {
+      state.status = "failed";
+      state.error = "Something went wrong";
+      state.tasks = [];
+    });
   },
 });
 
